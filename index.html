@@ -12,20 +12,20 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{background:#0f0f1a;font-family:'Outfit',system-ui,sans-serif;color:#f0f0f5;overflow-x:hidden;-webkit-tap-highlight-color:transparent;min-height:100vh}
+html,body{background:#0f0f1a;font-family:'Outfit',system-ui,sans-serif;color:#f0f0f5;overflow-x:hidden;-webkit-tap-highlight-color:transparent;min-height:100vh;min-height:100dvh}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 @keyframes cF{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
 @keyframes tS{0%{transform:translateX(-50%) translateY(-20px);opacity:0}100%{transform:translateX(-50%) translateY(0);opacity:1}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(34,197,94,0.2)}50%{box-shadow:0 0 40px rgba(34,197,94,0.4)}}
-.app{max-width:430px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:80px}
+.app{max-width:430px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 .card{background:#1a1a2e;border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06)}
 .btn{width:100%;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
 .ghost{width:100%;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#8888aa;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
 .inp{padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f0f5;font-size:15px;font-family:inherit;outline:none;width:100%}
 .check-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .2s}
 .check-row:active{transform:scale(0.97)}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(15,15,26,0.95);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);display:flex;padding:6px 12px 14px;z-index:100}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(15,15,26,0.95);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);display:flex;padding:6px 12px calc(10px + env(safe-area-inset-bottom,0px));z-index:100}
 .nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:8px;cursor:pointer;background:transparent;border:none;font-family:inherit}
 .ex-card{transition:all .3s;cursor:pointer}
 .ex-card:active{transform:scale(0.98)}
@@ -33,6 +33,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 .set-btn:active{transform:scale(0.95)}
 .reward{animation:pulse 2s ease infinite}
 .reward-glow{animation:glow 2s ease infinite}
+.header{padding:calc(env(safe-area-inset-top,20px) + 12px) 20px 14px;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);border-bottom:1px solid rgba(255,255,255,.05);position:relative;overflow:hidden}
 </style>
 </head>
 <body>
@@ -42,13 +43,16 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useCallback,useMemo,useRef}=React;
-
 function bip(f,d,v){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator();const g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=f;o.type="sine";g.gain.value=v||.2;o.start();o.stop(a.currentTime+(d||.12));setTimeout(()=>a.close(),400)}catch(e){}}
 const bipDone=()=>{bip(523,.15,.25);setTimeout(()=>bip(659,.15,.25),150);setTimeout(()=>bip(784,.2,.3),300)};
 
-const DAYS=["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
-const DAYF=["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
-const DM={0:{a:"#e2725b",l:"Descanso",ic:"🛋️",t:"rest"},1:{a:"#c084fc",l:"Pilates",ic:"🧘",t:"pilates"},2:{a:"#3b82f6",l:"Gym",ic:"💪",t:"gym"},3:{a:"#22c55e",l:"Pasos",ic:"🚶",t:"steps"},4:{a:"#10b981",l:"Gym",ic:"🏋️",t:"gym"},5:{a:"#a855f7",l:"Gym",ic:"⚡",t:"gym"},6:{a:"#f59e0b",l:"Paseo",ic:"🌳",t:"walk"}};
+// Week starts MONDAY: Mon=0..Sun=6 internally
+const DAYS_LABELS=["Lun","Mar","Mie","Jue","Vie","Sab","Dom"];
+const DAYS_FULL=["Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"];
+// JS getDay: 0=Sun,1=Mon..6=Sat -> convert to Mon=0..Sun=6
+function dayIdx(){var d=new Date().getDay();return d===0?6:d-1;}
+
+const DM={0:{a:"#c084fc",l:"Pilates",ic:"🧘",t:"pilates"},1:{a:"#3b82f6",l:"Gym",ic:"💪",t:"gym"},2:{a:"#22c55e",l:"Pasos",ic:"🚶",t:"steps"},3:{a:"#10b981",l:"Gym",ic:"🏋️",t:"gym"},4:{a:"#a855f7",l:"Gym",ic:"⚡",t:"gym"},5:{a:"#f59e0b",l:"Paseo",ic:"🌳",t:"walk"},6:{a:"#e2725b",l:"Descanso",ic:"🛋️",t:"rest"}};
 const EXE={curl:"💪",remo_vert:"🔼",elev_lat:"🦅",encog:"🤷",remo_inc:"🔙",lunge:"🦵",thruster:"🚀",goblet:"🏋️",glute:"🍑",remo_ren:"🔙",remo_rod:"🔙",press_pec:"🫸",flexion:"🫳",flex_pierna:"🫳",plancha:"🧱",jumping:"⭐",mountain:"🏔️",burpee:"💥",seal:"👋",crunch:"🔥",russian:"🔄",flutter:"🦶",elev_pier:"🦵",plancha_rot:"🔄",plancha_lat:"📐",plancha_pier:"🧱",generic:"🏃"};
 
 const RTS=[
@@ -60,47 +64,16 @@ const RTS=[
 const UV={id:"uv",nm:"Modo Ultravago",cl:"#f59e0b",dr:"~20min",w:[{id:"uve1",nm:"Sentadilla",rp:"12",ms:"Piernas",sv:"goblet",tp:"Sin peso OK."},{id:"uve2",nm:"Press",rp:"10",ms:"Pecho",sv:"press_pec",tp:"Ligero."},{id:"uve3",nm:"Remo",rp:"12",ms:"Espalda",sv:"remo_inc",tp:"Controlado."},{id:"uve4",nm:"Plancha",rp:"30s",ms:"Core",sv:"plancha",tp:"Rodillas si necesitas."}]};
 const ROUTES=[{nm:"Palacio Real",ds:"~8.500 pasos",st:["Embajadores","Lavapies","La Latina","Palacio Real","Madrid Rio","Embajadores"]},{nm:"Retiro",ds:"~9.000 pasos",st:["Embajadores","Atocha","Retiro","Estanque","Puerta Alcala","Embajadores"]},{nm:"Madrid Rio",ds:"~10.000 pasos",st:["Embajadores","Puerta Toledo","Madrid Rio","Puente Segovia","Principe Pio","Embajadores"]}];
 const REMS=[{t:"13:30",m:"🍽️ COME"},{t:"15:00",m:"☕ Cafe"},{t:"15:10",m:"💪 10 min..."},{t:"21:00",m:"🚶 Pasos?"}];
-const MOT=["Ya tienes plan. 🎯","Ultravago cuenta. 🔥","20 min. Puedes. ⚡","Constancia > intensidad. 🏆","No pienses. Ve. 🧠","Hazlo mal pero hazlo. 💥","Cada dia suma. 🧱","La gente fit va cuando no quiere. 🔑"];
-
-// REBALANCED POINTS: food matters most for weight loss
-const HABITS=[
-  {k:"desayuno",l:"🥐 Desayunar bien",p:1},
-  {k:"comidaB",l:"🍽️ Comer bien",p:1},
-  {k:"cenaB",l:"🥗 Cenar bien",p:1},
-  {k:"supps",l:"💊 Suplementos",p:0.5}
-];
-// gym=+2, steps=+1, pilates=+1, desayuno/comida/cena=+1 each, supps=+0.5
-// Weekly goal: 20 pts (realistic: 3 gym=6 + 5 step days=5 + 1 pilates + ~7 days * 3.5 habit pts = ~30 max possible)
-// 20 = achievable but requires consistency in EATING + training
+const MOT=["Ya tienes plan. 🎯","Ultravago cuenta. 🔥","20 min. Puedes. ⚡","Constancia > intensidad. 🏆","No pienses. Ve. 🧠","Hazlo mal pero hazlo. 💥","Cada dia suma. 🧱","Vas cuando no quieres. 🔑"];
+const HABITS=[{k:"desayuno",l:"🥐 Desayunar bien",p:1},{k:"comidaB",l:"🍽️ Comer bien",p:1},{k:"cenaB",l:"🥗 Cenar bien",p:1},{k:"supps",l:"💊 Suplementos",p:0.5}];
 const WEEKLY_GOAL=20;
-
-const WEEKLY_REWARDS=[
-  {min:20,msg:"🏆 SEMANA PERFECTA - Has demostrado que puedes. Esto es lo que separa a los que lo logran.",emoji:"🏆"},
-  {min:15,msg:"💪 MUY BUENA SEMANA - Vas por buen camino. Los resultados vienen.",emoji:"💪"},
-  {min:10,msg:"👍 SEMANA DECENTE - Puedes mejorar en la comida. Ahi esta la clave.",emoji:"👍"}
-];
-
-// Streak rewards (consecutive weeks hitting goal)
-const STREAK_MSGS=[
-  "",
-  "🔥 1 semana cumplida. Empieza el habito.",
-  "⚡ 2 semanas seguidas. Tu cuerpo ya nota cambios.",
-  "💎 3 semanas. El habito se esta formando.",
-  "🏆🏆🏆 4 SEMANAS SEGUIDAS. 1 MES COMPLETO. Has cambiado. Pesate y celebra el resultado."
-];
-
+const REWARDS=[{min:20,msg:"🏆 SEMANA PERFECTA - Has demostrado que puedes.",em:"🏆"},{min:15,msg:"💪 MUY BUENA SEMANA - Vas por buen camino.",em:"💪"},{min:10,msg:"👍 SEMANA DECENTE - Mejora la comida.",em:"👍"}];
+const STREAK_MSGS=["","🔥 1 semana. Empieza el habito.","⚡ 2 semanas. Tu cuerpo nota cambios.","💎 3 semanas. Habito formandose.","🏆🏆🏆 4 SEMANAS. 1 MES. Has cambiado. Pesate y celebra."];
 const gWK=()=>{const d=new Date(),s=new Date(d.getFullYear(),0,1);return d.getFullYear()+"-W"+Math.ceil(((d-s)/864e5+s.getDay()+1)/7)};
 const allExs=RTS.flatMap(r=>r.w||[]).concat(UV.w);
 
-function loadData(wk){try{var r=localStorage.getItem("fp4");if(r){var p=JSON.parse(r);if(p.cw!==wk){
-  // New week: archive old week score for streak
-  var oldPts=0;Object.entries(p.wc||{}).forEach(([d,c])=>{if([2,4,5].includes(+d)&&c.gym)oldPts+=2;if(c.steps)oldPts+=1;if(+d===1&&c.pilates)oldPts+=1;HABITS.forEach(h=>{if(c[h.k])oldPts+=h.p})});
-  p.streakWeeks=p.streakWeeks||0;
-  if(oldPts>=WEEKLY_GOAL)p.streakWeeks+=1;else p.streakWeeks=0;
-  p.weekHistory=p.weekHistory||[];p.weekHistory.push({week:p.cw,pts:Math.round(oldPts*10)/10});
-  p.wc={};p.cw=wk;p.rd=[];
-}p.ew=p.ew||{};p.rd=p.rd||[];p.wl=p.wl||[];p.wh=p.wh||{};p.streakWeeks=p.streakWeeks||0;p.weekHistory=p.weekHistory||[];return p;}}catch(e){}return{wc:{},cw:wk,wl:[],ew:{},rd:[],wh:{},streakWeeks:0,weekHistory:[]};}
-function saveD(d){try{localStorage.setItem("fp4",JSON.stringify(d))}catch(e){}}
+function loadData(wk){try{var r=localStorage.getItem("fp5");if(r){var p=JSON.parse(r);if(p.cw!==wk){var oldPts=0;Object.entries(p.wc||{}).forEach(([d,c])=>{if([1,3,4].includes(+d)&&c.gym)oldPts+=2;if(c.steps)oldPts+=1;if(+d===0&&c.pilates)oldPts+=1;HABITS.forEach(h=>{if(c[h.k])oldPts+=h.p})});p.streakWeeks=p.streakWeeks||0;if(oldPts>=WEEKLY_GOAL)p.streakWeeks+=1;else p.streakWeeks=0;p.weekHistory=p.weekHistory||[];p.weekHistory.push({week:p.cw,pts:Math.round(oldPts*10)/10});p.wc={};p.cw=wk;p.rd=[];}p.ew=p.ew||{};p.rd=p.rd||[];p.wl=p.wl||[];p.wh=p.wh||{};p.streakWeeks=p.streakWeeks||0;p.weekHistory=p.weekHistory||[];return p;}}catch(e){}return{wc:{},cw:wk,wl:[],ew:{},rd:[],wh:{},streakWeeks:0,weekHistory:[]};}
+function saveD(d){try{localStorage.setItem("fp5",JSON.stringify(d))}catch(e){}}
 
 function RestTimer({secs,color}){
   const S=secs||60,ref=useRef(null);const[left,setLeft]=useState(S);const[on,setOn]=useState(false);
@@ -126,22 +99,14 @@ function TabataTimer({exercises,color}){
 }
 
 function CRow({label,done,onTap,crit,pts}){
-  return(<div className="check-row" onClick={onTap} style={{background:done?"rgba(34,197,94,.05)":crit?"rgba(239,68,68,.03)":"#1a1a2e",border:"1px solid "+(done?"rgba(34,197,94,.18)":crit?"rgba(239,68,68,.12)":"rgba(255,255,255,.04)")}}>
-    <div style={{width:26,height:26,borderRadius:"50%",border:"2.5px solid "+(done?"#22c55e":"#555570"),background:done?"#22c55e":"transparent",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:12,flexShrink:0}}>{done?"\u2713":""}</div>
-    <span style={{fontSize:14,fontWeight:500,textDecoration:done?"line-through":"none",color:done?"#8888aa":"#f0f0f5",flex:1}}>{label}</span>
-    {pts&&<span style={{fontSize:11,color:done?"#22c55e":"#555570",fontWeight:600}}>+{pts}</span>}
-  </div>);
+  return(<div className="check-row" onClick={onTap} style={{background:done?"rgba(34,197,94,.05)":crit?"rgba(239,68,68,.03)":"#1a1a2e",border:"1px solid "+(done?"rgba(34,197,94,.18)":crit?"rgba(239,68,68,.12)":"rgba(255,255,255,.04)")}}><div style={{width:26,height:26,borderRadius:"50%",border:"2.5px solid "+(done?"#22c55e":"#555570"),background:done?"#22c55e":"transparent",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:12,flexShrink:0}}>{done?"\u2713":""}</div><span style={{fontSize:14,fontWeight:500,textDecoration:done?"line-through":"none",color:done?"#8888aa":"#f0f0f5",flex:1}}>{label}</span>{pts?<span style={{fontSize:11,color:done?"#22c55e":"#555570",fontWeight:600}}>+{pts}</span>:null}</div>);
 }
 
 function MiniChart({points,color,label,unit}){
   if(!points||points.length<2)return null;
   var vals=points.map(p=>p.v),mn=Math.min(...vals),mx=Math.max(...vals),range=mx-mn||1,w=280,h=90,pad=10,step=(w-pad*2)/Math.max(points.length-1,1);
-  var pathD=points.map((p,i)=>{var x=pad+i*step,y=h-pad-((p.v-mn)/range)*(h-pad*2);return(i===0?"M":"L")+x+","+y}).join(" ");
-  var diff=vals[vals.length-1]-vals[0];
-  return(<div className="card"><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,fontWeight:700,color}}>{label}</span><span style={{fontSize:13,fontWeight:700,color}}>{vals[vals.length-1]} {unit}</span></div>
-  <svg viewBox={"0 0 "+w+" "+h} style={{width:"100%",height:90}}><path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>{points.map((p,i)=>{var x=pad+i*step,y=h-pad-((p.v-mn)/range)*(h-pad*2);return<circle key={i} cx={x} cy={y} r={i===points.length-1?4:2.5} fill={i===points.length-1?color:color+"88"}/>})}</svg>
-  <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"#555570",marginTop:4}}><span>{points[0].l}</span><span>{points[points.length-1].l}</span></div>
-  <div style={{fontSize:12,marginTop:6,color:diff<0?"#22c55e":diff>0?"#ef4444":"#8888aa",fontWeight:600}}>{diff<0?"↓ ":"↑ "}{Math.abs(diff).toFixed(1)} {unit}</div></div>);
+  var pathD=points.map((p,i)=>{var x=pad+i*step,y=h-pad-((p.v-mn)/range)*(h-pad*2);return(i===0?"M":"L")+x+","+y}).join(" ");var diff=vals[vals.length-1]-vals[0];
+  return(<div className="card"><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,fontWeight:700,color}}>{label}</span><span style={{fontSize:13,fontWeight:700,color}}>{vals[vals.length-1]} {unit}</span></div><svg viewBox={"0 0 "+w+" "+h} style={{width:"100%",height:90}}><path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>{points.map((p,i)=>{var x=pad+i*step,y=h-pad-((p.v-mn)/range)*(h-pad*2);return<circle key={i} cx={x} cy={y} r={i===points.length-1?4:2.5} fill={i===points.length-1?color:color+"88"}/>})}</svg><div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"#555570",marginTop:4}}><span>{points[0].l}</span><span>{points[points.length-1].l}</span></div><div style={{fontSize:12,marginTop:6,color:diff<0?"#22c55e":diff>0?"#ef4444":"#8888aa",fontWeight:600}}>{diff<0?"↓ ":"↑ "}{Math.abs(diff).toFixed(1)} {unit}</div></div>);
 }
 
 function App(){
@@ -157,102 +122,61 @@ function App(){
   const[ri,setRi]=useState(0);
   const[ew,setEw]=useState({});
 
-  var today=new Date().getDay(),dm=DM[today],accent=dm.a,isGym=dm.t==="gym";
+  // Mon=0..Sun=6
+  var today=dayIdx(),dm=DM[today],accent=dm.a,isGym=dm.t==="gym";
   var tc=data.wc[today]||{};
-
   var save=d=>{setData(d);saveD(d)};
   var toggle=k=>{setData(prev=>{var dc={...(prev.wc[today]||{})};dc[k]=!dc[k];var nd={...prev,wc:{...prev.wc,[today]:dc}};saveD(nd);if(dc[k]&&(k==="gym"||k==="pilates")){setCfti(true);setTimeout(()=>setCfti(false),2500)}return nd})};
   var flash=m=>{setToast(m);setTimeout(()=>setToast(null),4000)};
   var avail=useMemo(()=>RTS.filter(r=>(data.rd||[]).indexOf(r.id)<0),[data]);
-
-  var wp=useMemo(()=>{var p=0;Object.entries(data.wc||{}).forEach(([d,c])=>{if([2,4,5].includes(+d)&&c.gym)p+=2;if(c.steps)p+=1;if(+d===1&&c.pilates)p+=1;HABITS.forEach(h=>{if(c[h.k])p+=h.p})});return Math.round(p*10)/10},[data]);
-  var mg=useMemo(()=>{var m=0;[2,4,5].forEach(d=>{if(d<today&&!(data.wc[d]||{}).gym)m++});return m},[data,today]);
+  // Gym days are Tue=1,Thu=3,Fri=4 in our Mon=0 system
+  var wp=useMemo(()=>{var p=0;Object.entries(data.wc||{}).forEach(([d,c])=>{if([1,3,4].includes(+d)&&c.gym)p+=2;if(c.steps)p+=1;if(+d===0&&c.pilates)p+=1;HABITS.forEach(h=>{if(c[h.k])p+=h.p})});return Math.round(p*10)/10},[data]);
+  var mg=useMemo(()=>{var m=0;[1,3,4].forEach(d=>{if(d<today&&!(data.wc[d]||{}).gym)m++});return m},[data,today]);
   var streak=data.streakWeeks||0;
-  var currentReward=WEEKLY_REWARDS.find(r=>wp>=r.min);
+  var currentReward=REWARDS.find(r=>wp>=r.min);
 
   var toggleSet=(exi,sti)=>{setSets(prev=>{var cur=[...(prev[exi]||[false,false,false])];cur[sti]=!cur[sti];var next={...prev,[exi]:cur};if(cur.every(Boolean)&&ar&&ar.w){var n=exi+1;if(n<ar.w.length)setTimeout(()=>setAex(n),500)}return next})};
-
-  var completeRoutine=rid=>{
-    var done=[...(data.rd||[])];if(!done.includes(rid))done.push(rid);
-    var wh={...(data.wh||{})};var dk=new Date().toISOString().slice(0,10);
-    Object.entries(ew).forEach(([id,w])=>{if(!wh[id])wh[id]=[];wh[id].push({date:dk,weight:w})});
-    var nd={...data,rd:done,ew:{...data.ew,...ew},wh,wc:{...data.wc,[today]:{...(data.wc[today]||{}),gym:true}}};
-    save(nd);setCfti(true);setTimeout(()=>setCfti(false),2500);setAr(null);setSets({});setAex(0);setEw({});
-  };
+  var completeRoutine=rid=>{var done=[...(data.rd||[])];if(!done.includes(rid))done.push(rid);var wh={...(data.wh||{})};var dk=new Date().toISOString().slice(0,10);Object.entries(ew).forEach(([id,w])=>{if(!wh[id])wh[id]=[];wh[id].push({date:dk,weight:w})});var nd={...data,rd:done,ew:{...data.ew,...ew},wh,wc:{...data.wc,[today]:{...(data.wc[today]||{}),gym:true}}};save(nd);setCfti(true);setTimeout(()=>setCfti(false),2500);setAr(null);setSets({});setAex(0);setEw({})};
 
   // ═══ ROUTINE ═══
-  var renderRoutine=()=>{
-    if(!ar)return null;var r=ar,exs=r.w||[],isTO=!r.w&&r.tbs;
-    var progress=exs.filter((_,i)=>(sets[i]||[]).every(Boolean)).length,allDone=exs.length>0&&progress===exs.length;
-    return(<div style={{padding:"16px 20px",paddingBottom:100}}>
-      <button className="ghost" onClick={()=>{setAr(null);setSets({});setAex(0);setEw({})}}>← Volver</button>
-      <div className="card" style={{borderLeft:"4px solid "+r.cl,marginTop:12}}><div style={{fontSize:20,fontWeight:800,color:r.cl}}>{r.nm}</div><div style={{display:"flex",gap:8,marginTop:8}}><span style={{fontSize:11,padding:"4px 10px",borderRadius:8,fontWeight:600,background:r.cl+"18",color:r.cl}}>{r.dr}</span>{exs.length>0&&<span style={{fontSize:11,padding:"4px 10px",borderRadius:8,fontWeight:600,background:"rgba(255,255,255,.05)",color:"#8888aa"}}>3 series</span>}</div>
-      {exs.length>0&&<div style={{marginTop:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#8888aa",marginBottom:4}}><span>Progreso</span><span style={{color:allDone?"#22c55e":r.cl,fontWeight:700}}>{progress}/{exs.length}</span></div><div style={{height:6,background:"rgba(255,255,255,.06)",borderRadius:6,overflow:"hidden"}}><div style={{height:"100%",width:(progress/exs.length)*100+"%",background:allDone?"linear-gradient(90deg,#22c55e,#16a34a)":"linear-gradient(90deg,"+r.cl+","+r.cl+"cc)",borderRadius:6,transition:"width .5s"}}/></div></div>}</div>
-
-      {exs.map((ex,i)=>{var isA=aex===i,sA=sets[i]||[false,false,false],exD=sA.every(Boolean),pw=data.ew[ex.id],cw=ew[ex.id];
-      return(<div key={ex.id} className="card ex-card" onClick={()=>setAex(i)} style={{marginTop:8,borderColor:exD?"rgba(34,197,94,.25)":isA?r.cl+"55":"rgba(255,255,255,.06)",background:exD?"rgba(34,197,94,.04)":isA?r.cl+"08":"#1a1a2e"}}>
-        <div style={{display:"flex",gap:12,alignItems:"flex-start"}}><div style={{fontSize:32,lineHeight:1,opacity:exD?.4:1}}>{EXE[ex.sv]||"🏃"}</div><div style={{flex:1,minWidth:0}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontWeight:700,fontSize:14,color:exD?"#8888aa":"#f0f0f5",textDecoration:exD?"line-through":"none",flex:1}}>{ex.nm}</div>{exD&&<span>✅</span>}{isA&&!exD&&<span style={{fontSize:8,background:r.cl,color:"#0f0f1a",padding:"2px 8px",borderRadius:6,fontWeight:700}}>ACTIVO</span>}</div><div style={{fontSize:12,color:r.cl,fontWeight:600,marginTop:2}}>3x{ex.rp} - {ex.ms}</div>{isA&&<div style={{fontSize:12,color:"#8888aa",marginTop:4}}>{ex.tp}</div>}{pw&&<div style={{fontSize:11,color:"#555570",marginTop:2}}>Ultimo: {pw}kg</div>}</div></div>
-        <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}><span style={{fontSize:11,color:"#555570",minWidth:40}}>Series:</span>{sA.map((d,si2)=><button key={si2} className="set-btn" onClick={e=>{e.stopPropagation();toggleSet(i,si2)}} style={{border:"2px solid "+(d?"#22c55e":isA?r.cl+"44":"rgba(255,255,255,.08)"),background:d?"rgba(34,197,94,.1)":"rgba(255,255,255,.02)",color:d?"#22c55e":isA?r.cl:"#8888aa"}}>{d?"✓ ":""}S{si2+1}</button>)}</div>
-        {isA&&<div style={{display:"flex",gap:8,marginTop:10,alignItems:"center"}} onClick={e=>e.stopPropagation()}><span style={{fontSize:11,color:"#555570",minWidth:40}}>Peso:</span><input type="number" step="0.5" className="inp" placeholder={pw?pw+"kg":"kg"} value={cw||""} onChange={e=>{var v=parseFloat(e.target.value);if(!isNaN(v)&&v>0)setEw(p=>({...p,[ex.id]:v}));else{var n={...ew};delete n[ex.id];setEw(n)}}} style={{flex:1,padding:"8px 12px",fontSize:14}}/><span style={{fontSize:12,color:"#555570"}}>kg</span>{pw&&cw&&cw>pw&&<span style={{fontSize:11,color:"#22c55e",fontWeight:700}}>↑{(cw-pw).toFixed(1)}</span>}</div>}
-        {isA&&sA.some(Boolean)&&!exD&&<RestTimer secs={60} color={r.cl}/>}
-      </div>)})}
-
-      {r.tb&&<div className="card" style={{marginTop:12,borderLeft:"4px solid #ef4444"}}><div style={{fontWeight:800,color:"#ef4444",fontSize:16,marginBottom:4}}>🔥 TABATA</div><div style={{fontSize:12,color:"#8888aa"}}>20s trabajo / 10s descanso - 2 rondas</div><TabataTimer exercises={r.tb} color="#ef4444"/>{r.tbNote&&<div style={{fontSize:11,color:"#f59e0b",marginTop:8,fontStyle:"italic"}}>{r.tbNote}</div>}</div>}
-      {isTO&&r.tbs.map((sec,si2)=><div key={si2} className="card" style={{marginTop:8,borderLeft:"4px solid #ef4444"}}><div style={{fontWeight:700,color:r.cl,fontSize:14,marginBottom:4}}>{sec.nm}</div><TabataTimer exercises={sec.ex} color={r.cl}/></div>)}
-      <button className="btn" onClick={()=>completeRoutine(r.id)} style={{background:allDone?"linear-gradient(135deg,#22c55e,#16a34a)":"linear-gradient(135deg,"+r.cl+","+r.cl+"cc)",marginTop:16}}>{allDone?"🏆 COMPLETADA":"✅ Marcar hecha"}</button>
-    </div>);
-  };
+  var renderRoutine=()=>{if(!ar)return null;var r=ar,exs=r.w||[],isTO=!r.w&&r.tbs;var progress=exs.filter((_,i)=>(sets[i]||[]).every(Boolean)).length,allDone=exs.length>0&&progress===exs.length;
+  return(<div style={{padding:"16px 20px",paddingBottom:100}}>
+    <button className="ghost" onClick={()=>{setAr(null);setSets({});setAex(0);setEw({})}}>← Volver</button>
+    <div className="card" style={{borderLeft:"4px solid "+r.cl,marginTop:12}}><div style={{fontSize:20,fontWeight:800,color:r.cl}}>{r.nm}</div><div style={{display:"flex",gap:8,marginTop:8}}><span style={{fontSize:11,padding:"4px 10px",borderRadius:8,fontWeight:600,background:r.cl+"18",color:r.cl}}>{r.dr}</span>{exs.length>0&&<span style={{fontSize:11,padding:"4px 10px",borderRadius:8,fontWeight:600,background:"rgba(255,255,255,.05)",color:"#8888aa"}}>3 series</span>}</div>{exs.length>0&&<div style={{marginTop:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#8888aa",marginBottom:4}}><span>Progreso</span><span style={{color:allDone?"#22c55e":r.cl,fontWeight:700}}>{progress}/{exs.length}</span></div><div style={{height:6,background:"rgba(255,255,255,.06)",borderRadius:6,overflow:"hidden"}}><div style={{height:"100%",width:(progress/exs.length)*100+"%",background:allDone?"linear-gradient(90deg,#22c55e,#16a34a)":"linear-gradient(90deg,"+r.cl+","+r.cl+"cc)",borderRadius:6,transition:"width .5s"}}/></div></div>}</div>
+    {exs.map((ex,i)=>{var isA=aex===i,sA=sets[i]||[false,false,false],exD=sA.every(Boolean),pw=data.ew[ex.id],cw=ew[ex.id];
+    return(<div key={ex.id} className="card ex-card" onClick={()=>setAex(i)} style={{marginTop:8,borderColor:exD?"rgba(34,197,94,.25)":isA?r.cl+"55":"rgba(255,255,255,.06)",background:exD?"rgba(34,197,94,.04)":isA?r.cl+"08":"#1a1a2e"}}>
+      <div style={{display:"flex",gap:12,alignItems:"flex-start"}}><div style={{fontSize:32,lineHeight:1,opacity:exD?.4:1}}>{EXE[ex.sv]||"🏃"}</div><div style={{flex:1,minWidth:0}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontWeight:700,fontSize:14,color:exD?"#8888aa":"#f0f0f5",textDecoration:exD?"line-through":"none",flex:1}}>{ex.nm}</div>{exD&&<span>✅</span>}{isA&&!exD&&<span style={{fontSize:8,background:r.cl,color:"#0f0f1a",padding:"2px 8px",borderRadius:6,fontWeight:700}}>ACTIVO</span>}</div><div style={{fontSize:12,color:r.cl,fontWeight:600,marginTop:2}}>3x{ex.rp} - {ex.ms}</div>{isA&&<div style={{fontSize:12,color:"#8888aa",marginTop:4}}>{ex.tp}</div>}{pw&&<div style={{fontSize:11,color:"#555570",marginTop:2}}>Ultimo: {pw}kg</div>}</div></div>
+      <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}><span style={{fontSize:11,color:"#555570",minWidth:40}}>Series:</span>{sA.map((d,si2)=><button key={si2} className="set-btn" onClick={e=>{e.stopPropagation();toggleSet(i,si2)}} style={{border:"2px solid "+(d?"#22c55e":isA?r.cl+"44":"rgba(255,255,255,.08)"),background:d?"rgba(34,197,94,.1)":"rgba(255,255,255,.02)",color:d?"#22c55e":isA?r.cl:"#8888aa"}}>{d?"✓ ":""}S{si2+1}</button>)}</div>
+      {isA&&<div style={{display:"flex",gap:8,marginTop:10,alignItems:"center"}} onClick={e=>e.stopPropagation()}><span style={{fontSize:11,color:"#555570",minWidth:40}}>Peso:</span><input type="number" step="0.5" className="inp" placeholder={pw?pw+"kg":"kg"} value={cw||""} onChange={e=>{var v=parseFloat(e.target.value);if(!isNaN(v)&&v>0)setEw(p=>({...p,[ex.id]:v}));else{var n={...ew};delete n[ex.id];setEw(n)}}} style={{flex:1,padding:"8px 12px",fontSize:14}}/><span style={{fontSize:12,color:"#555570"}}>kg</span>{pw&&cw&&cw>pw&&<span style={{fontSize:11,color:"#22c55e",fontWeight:700}}>↑{(cw-pw).toFixed(1)}</span>}</div>}
+      {isA&&sA.some(Boolean)&&!exD&&<RestTimer secs={60} color={r.cl}/>}
+    </div>)})}
+    {r.tb&&<div className="card" style={{marginTop:12,borderLeft:"4px solid #ef4444"}}><div style={{fontWeight:800,color:"#ef4444",fontSize:16,marginBottom:4}}>🔥 TABATA</div><div style={{fontSize:12,color:"#8888aa"}}>20s/10s - 2 rondas</div><TabataTimer exercises={r.tb} color="#ef4444"/>{r.tbNote&&<div style={{fontSize:11,color:"#f59e0b",marginTop:8,fontStyle:"italic"}}>{r.tbNote}</div>}</div>}
+    {isTO&&r.tbs.map((sec,si2)=><div key={si2} className="card" style={{marginTop:8,borderLeft:"4px solid #ef4444"}}><div style={{fontWeight:700,color:r.cl,fontSize:14,marginBottom:4}}>{sec.nm}</div><TabataTimer exercises={sec.ex} color={r.cl}/></div>)}
+    <button className="btn" onClick={()=>completeRoutine(r.id)} style={{background:allDone?"linear-gradient(135deg,#22c55e,#16a34a)":"linear-gradient(135deg,"+r.cl+","+r.cl+"cc)",marginTop:16}}>{allDone?"🏆 COMPLETADA":"✅ Marcar hecha"}</button>
+  </div>)};
 
   // ═══ HOME ═══
   var renderHome=()=>(<div style={{padding:"16px 20px",paddingBottom:100}}>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:14}}>{DAYS.map((d,i)=>{var m=DM[i],c=data.wc[i]||{},dn=c.gym||c.pilates||c.steps||c.walk||c.rest;return<div key={i} style={{textAlign:"center",padding:"8px 2px",borderRadius:8,background:i===today?accent+"11":"rgba(255,255,255,.02)",border:"1.5px solid "+(i===today?accent:dn?"rgba(34,197,94,.25)":"rgba(255,255,255,.04)")}}><div style={{fontSize:9,color:"#555570",fontWeight:700}}>{d}</div><div style={{fontSize:16,marginTop:2}}>{dn?"✅":m.ic}</div></div>})}</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:14}}>{DAYS_LABELS.map((d,i)=>{var m=DM[i],c=data.wc[i]||{},dn=c.gym||c.pilates||c.steps||c.walk||c.rest;return<div key={i} style={{textAlign:"center",padding:"8px 2px",borderRadius:8,background:i===today?accent+"11":"rgba(255,255,255,.02)",border:"1.5px solid "+(i===today?accent:dn?"rgba(34,197,94,.25)":"rgba(255,255,255,.04)")}}><div style={{fontSize:9,color:"#555570",fontWeight:700}}>{d}</div><div style={{fontSize:16,marginTop:2}}>{dn?"✅":m.ic}</div></div>})}</div>
+    <div className="card" style={{padding:14,marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#8888aa",marginBottom:6}}><span>🎮 Puntos</span><span style={{color:wp>=WEEKLY_GOAL?"#22c55e":accent,fontWeight:700}}>{wp>=WEEKLY_GOAL?"🏆 META":wp+"/"+WEEKLY_GOAL}</span></div><div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:8,overflow:"hidden"}}><div style={{height:"100%",width:Math.min(wp/WEEKLY_GOAL,1)*100+"%",background:wp>=WEEKLY_GOAL?"linear-gradient(90deg,#22c55e,#16a34a)":"linear-gradient(90deg,"+accent+","+accent+"dd)",borderRadius:8,transition:"width .8s"}}/></div><div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap",fontSize:11,color:"#555570"}}><span>🏋️+2</span><span>🚶+1</span><span>🍽️+1</span><span>💊+0.5</span></div></div>
 
-    {/* Points with goal */}
-    <div className="card" style={{padding:14,marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#8888aa",marginBottom:6}}><span>🎮 Puntos semanales</span><span style={{color:wp>=WEEKLY_GOAL?"#22c55e":accent,fontWeight:700}}>{wp>=WEEKLY_GOAL?"🏆 META":wp+"/"+WEEKLY_GOAL}</span></div>
-      <div style={{height:8,background:"rgba(255,255,255,.06)",borderRadius:8,overflow:"hidden"}}><div style={{height:"100%",width:Math.min(wp/WEEKLY_GOAL,1)*100+"%",background:wp>=WEEKLY_GOAL?"linear-gradient(90deg,#22c55e,#16a34a)":"linear-gradient(90deg,"+accent+","+accent+"dd)",borderRadius:8,transition:"width .8s"}}/></div>
-      <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap",fontSize:11,color:"#555570"}}>
-        <span>🏋️ Gym: <b style={{color:"#3b82f6"}}>+2</b></span>
-        <span>🚶 Pasos: <b style={{color:"#22c55e"}}>+1</b></span>
-        <span>🍽️ Comida: <b style={{color:"#f59e0b"}}>+1</b></span>
-        <span>💊 Supps: <b style={{color:"#c084fc"}}>+0.5</b></span>
-      </div>
-    </div>
-
-    {/* Weekly reward */}
-    {currentReward&&<div className="card reward-glow" style={{background:"rgba(34,197,94,.06)",borderColor:"rgba(34,197,94,.25)",textAlign:"center",padding:20,marginBottom:10}}>
-      <div className="reward" style={{fontSize:40}}>{currentReward.emoji}</div>
-      <div style={{fontSize:14,fontWeight:700,color:"#22c55e",marginTop:8,lineHeight:1.4}}>{currentReward.msg}</div>
-    </div>}
-
-    {/* Streak */}
-    {streak>0&&<div className="card" style={{background:"rgba(245,158,11,.06)",borderColor:"rgba(245,158,11,.2)",textAlign:"center",padding:16,marginBottom:10}}>
-      <div style={{fontSize:28}}>{"🔥".repeat(Math.min(streak,4))}</div>
-      <div style={{fontSize:14,fontWeight:700,color:"#f59e0b",marginTop:6}}>{STREAK_MSGS[Math.min(streak,4)]}</div>
-      <div style={{fontSize:12,color:"#8888aa",marginTop:4}}>{streak} semana{streak>1?"s":""} consecutiva{streak>1?"s":""} cumpliendo meta</div>
-    </div>}
-
+    {currentReward&&<div className="card reward-glow" style={{background:"rgba(34,197,94,.06)",borderColor:"rgba(34,197,94,.25)",textAlign:"center",padding:20}}><div className="reward" style={{fontSize:40}}>{currentReward.em}</div><div style={{fontSize:14,fontWeight:700,color:"#22c55e",marginTop:8,lineHeight:1.4}}>{currentReward.msg}</div></div>}
+    {streak>0&&<div className="card" style={{background:"rgba(245,158,11,.06)",borderColor:"rgba(245,158,11,.2)",textAlign:"center",padding:16}}><div style={{fontSize:28}}>{"🔥".repeat(Math.min(streak,4))}</div><div style={{fontSize:14,fontWeight:700,color:"#f59e0b",marginTop:6}}>{STREAK_MSGS[Math.min(streak,4)]}</div><div style={{fontSize:12,color:"#8888aa",marginTop:4}}>{streak} semana{streak>1?"s":""} seguida{streak>1?"s":""}</div></div>}
     {mg>=2&&<div className="card" style={{background:"rgba(245,158,11,.06)",borderColor:"rgba(245,158,11,.2)",display:"flex",gap:12,padding:14}}><span style={{fontSize:26}}>🤝</span><span style={{fontSize:13,color:"#f59e0b"}}>Prueba ultravago - 20 min.</span></div>}
 
-    {/* WEIGHT */}
     <div style={{fontWeight:700,fontSize:17,margin:"16px 0 10px"}}>⚖️ Peso de hoy</div>
-    <div className="card">
-      {tc.weightToday?<div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:24}}>✅</span><span style={{fontSize:15,fontWeight:600}}>{tc.weightToday} kg</span></div>:
-      <div style={{display:"flex",gap:8}}><input type="number" step="0.1" className="inp" placeholder="Peso (kg)" value={wi} onChange={e=>setWi(e.target.value)} style={{flex:1}}/><button className="btn" onClick={()=>{var w=parseFloat(wi);if(!isNaN(w)&&w>40&&w<200){var dc={...(data.wc[today]||{}),weightToday:w};save({...data,wc:{...data.wc,[today]:dc},wl:[...(data.wl||[]),{date:new Date().toISOString().slice(0,10),weight:w}]});setWi("");flash("✅ "+w+"kg registrado")}}} style={{width:"auto",padding:"12px 20px",background:"linear-gradient(135deg,"+accent+","+accent+"cc)"}}>+</button></div>}
-    </div>
+    <div className="card">{tc.weightToday?<div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:24}}>✅</span><span style={{fontSize:15,fontWeight:600}}>{tc.weightToday} kg</span></div>:<div style={{display:"flex",gap:8}}><input type="number" step="0.1" className="inp" placeholder="Peso (kg)" value={wi} onChange={e=>setWi(e.target.value)} style={{flex:1}}/><button className="btn" onClick={()=>{var w=parseFloat(wi);if(!isNaN(w)&&w>40&&w<200){var dc={...(data.wc[today]||{}),weightToday:w};save({...data,wc:{...data.wc,[today]:dc},wl:[...(data.wl||[]),{date:new Date().toISOString().slice(0,10),weight:w}]});setWi("");flash("✅ "+w+"kg")}}} style={{width:"auto",padding:"12px 20px",background:"linear-gradient(135deg,"+accent+","+accent+"cc)"}}>+</button></div>}</div>
 
-    {/* HABITS */}
     <div style={{fontWeight:700,fontSize:17,margin:"16px 0 10px"}}>📋 Habitos diarios</div>
     <div className="card">{HABITS.map(h=><CRow key={h.k} label={h.l} done={tc[h.k]} onTap={()=>toggle(h.k)} pts={h.p}/>)}</div>
 
-    {/* TODAY */}
-    <div style={{fontWeight:700,fontSize:17,margin:"16px 0 10px"}}>{dm.ic} Hoy - {DAYF[today]}</div>
+    <div style={{fontWeight:700,fontSize:17,margin:"16px 0 10px"}}>{dm.ic} {DAYS_FULL[today]}</div>
     <div className="card" style={{borderLeft:"4px solid "+accent}}>
       <div style={{fontSize:18,fontWeight:800,color:accent,marginBottom:10}}>{dm.l}</div>
-      {dm.t==="rest"&&<CRow label="Descanso" done={tc.rest} onTap={()=>toggle("rest")} pts={0}/>}
+      {dm.t==="rest"&&<CRow label="Descanso" done={tc.rest} onTap={()=>toggle("rest")}/>}
       {dm.t==="pilates"&&<><CRow label="Pilates (19:30)" done={tc.pilates} onTap={()=>toggle("pilates")} pts={1}/><CRow label="8k+ pasos" done={tc.steps} onTap={()=>toggle("steps")} pts={1}/></>}
       {dm.t==="steps"&&<CRow label="Pasos (8k-10k)" done={tc.steps} onTap={()=>toggle("steps")} pts={1}/>}
-      {dm.t==="walk"&&<CRow label="Paseo largo" done={tc.walk} onTap={()=>toggle("walk")} pts={0}/>}
+      {dm.t==="walk"&&<CRow label="Paseo largo" done={tc.walk} onTap={()=>toggle("walk")}/>}
       {dm.t==="gym"&&<>
         <CRow label="⚠️ Comer antes" done={tc.meal} onTap={()=>toggle("meal")} crit={true}/>
         <CRow label="Gym completado" done={tc.gym} onTap={()=>toggle("gym")} pts={2}/>
@@ -267,66 +191,41 @@ function App(){
   </div>);
 
   // ═══ ROUTES ═══
-  var renderRoutes=()=>{var route=ROUTES[ri];return(<div style={{padding:"16px 20px",paddingBottom:100}}>
-    <div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>🚶 Rutas</div>
-    <div style={{display:"flex",gap:6,marginBottom:14}}>{ROUTES.map((r,i)=><button key={i} onClick={()=>setRi(i)} style={{padding:"7px 12px",borderRadius:18,border:"1.5px solid "+(i===ri?accent:"rgba(255,255,255,.08)"),background:i===ri?accent+"15":"transparent",color:i===ri?accent:"#8888aa",fontSize:12,fontWeight:600,cursor:"pointer"}}>{r.nm}</button>)}</div>
-    <div className="card" style={{borderLeft:"4px solid "+accent}}><div style={{fontWeight:800,fontSize:17,color:accent}}>{route.nm}</div><div style={{fontSize:12,color:"#8888aa",marginTop:4,marginBottom:14}}>{route.ds}</div>{route.st.map((s,i)=><div key={i} style={{display:"flex",gap:12,position:"relative",paddingBottom:i<route.st.length-1?6:0}}>{i<route.st.length-1&&<div style={{position:"absolute",left:7,top:20,width:2,height:"100%",background:accent+"33"}}/>}<div style={{width:16,height:16,borderRadius:"50%",background:i===0||i===route.st.length-1?accent:accent+"55",border:"2px solid "+accent,flexShrink:0,marginTop:2,zIndex:1}}/><div style={{fontSize:13,fontWeight:500,paddingBottom:8}}>{s}</div></div>)}</div></div>)};
+  var renderRoutes=()=>{var route=ROUTES[ri];return(<div style={{padding:"16px 20px",paddingBottom:100}}><div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>🚶 Rutas</div><div style={{display:"flex",gap:6,marginBottom:14}}>{ROUTES.map((r,i)=><button key={i} onClick={()=>setRi(i)} style={{padding:"7px 12px",borderRadius:18,border:"1.5px solid "+(i===ri?accent:"rgba(255,255,255,.08)"),background:i===ri?accent+"15":"transparent",color:i===ri?accent:"#8888aa",fontSize:12,fontWeight:600,cursor:"pointer"}}>{r.nm}</button>)}</div><div className="card" style={{borderLeft:"4px solid "+accent}}><div style={{fontWeight:800,fontSize:17,color:accent}}>{route.nm}</div><div style={{fontSize:12,color:"#8888aa",marginTop:4,marginBottom:14}}>{route.ds}</div>{route.st.map((s,i)=><div key={i} style={{display:"flex",gap:12,position:"relative",paddingBottom:i<route.st.length-1?6:0}}>{i<route.st.length-1&&<div style={{position:"absolute",left:7,top:20,width:2,height:"100%",background:accent+"33"}}/>}<div style={{width:16,height:16,borderRadius:"50%",background:i===0||i===route.st.length-1?accent:accent+"55",border:"2px solid "+accent,flexShrink:0,marginTop:2,zIndex:1}}/><div style={{fontSize:13,fontWeight:500,paddingBottom:8}}>{s}</div></div>)}</div></div>)};
 
   // ═══ EVOLUTION ═══
   var renderEvo=()=>{var wl=data.wl||[],wh=data.wh||{},withH=allExs.filter(ex=>(wh[ex.id]||[]).length>=2);
-  return(<div style={{padding:"16px 20px",paddingBottom:100}}>
-    <div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>📈 Evolucion</div>
-    <div style={{fontWeight:600,fontSize:14,color:accent,margin:"12px 0 8px"}}>⚖️ Peso corporal</div>
-    {wl.length>=2?<MiniChart points={wl.map(w=>({v:w.weight,l:w.date.slice(5)}))} color={accent} label="Peso" unit="kg"/>:<div className="card" style={{textAlign:"center",color:"#555570",fontSize:13}}>{wl.length===1?"Necesitas 2+ registros":"Sin registros"}</div>}
-
-    {/* Week history */}
-    {(data.weekHistory||[]).length>0&&<><div style={{fontWeight:600,fontSize:14,color:"#c084fc",margin:"20px 0 8px"}}>📊 Puntos por semana</div>
-    <MiniChart points={(data.weekHistory||[]).map(w=>({v:w.pts,l:w.week.slice(5)}))} color="#c084fc" label="Puntos" unit="pts"/></>}
-
+  return(<div style={{padding:"16px 20px",paddingBottom:100}}><div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>📈 Evolucion</div>
+    <div style={{fontWeight:600,fontSize:14,color:accent,margin:"12px 0 8px"}}>⚖️ Peso</div>
+    {wl.length>=2?<MiniChart points={wl.map(w=>({v:w.weight,l:w.date.slice(5)}))} color={accent} label="Peso" unit="kg"/>:<div className="card" style={{textAlign:"center",color:"#555570",fontSize:13}}>{wl.length===1?"2+ registros necesarios":"Sin registros"}</div>}
+    {(data.weekHistory||[]).length>0&&<><div style={{fontWeight:600,fontSize:14,color:"#c084fc",margin:"20px 0 8px"}}>📊 Pts/semana</div><MiniChart points={(data.weekHistory||[]).map(w=>({v:w.pts,l:w.week.slice(5)}))} color="#c084fc" label="Puntos" unit="pts"/></>}
     <div style={{fontWeight:600,fontSize:14,color:"#3b82f6",margin:"20px 0 8px"}}>🏋️ Pesos gym</div>
     {withH.length>0?withH.map(ex=>{var hist=wh[ex.id],pts=hist.map(h=>({v:h.weight,l:h.date.slice(5)})),rc=RTS.find(r=>(r.w||[]).find(e=>e.id===ex.id));return<MiniChart key={ex.id} points={pts} color={rc?rc.cl:"#3b82f6"} label={ex.nm} unit="kg"/>}):<div className="card" style={{textAlign:"center",color:"#555570",fontSize:13}}>Completa rutinas con pesos</div>}
-    {Object.keys(data.ew||{}).length>0&&<><div style={{fontWeight:600,fontSize:14,color:"#8888aa",margin:"20px 0 8px"}}>Pesos actuales</div><div className="card">{Object.entries(data.ew).map(([id,w])=>{var ex=allExs.find(e=>e.id===id);if(!ex)return null;return<div key={id} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>{EXE[ex.sv]||"🏃"}</span><span style={{fontSize:13}}>{ex.nm}</span></div><span style={{fontWeight:700,color:accent}}>{w}kg</span></div>})}</div></>}
+    {Object.keys(data.ew||{}).length>0&&<><div style={{fontWeight:600,fontSize:14,color:"#8888aa",margin:"20px 0 8px"}}>Actuales</div><div className="card">{Object.entries(data.ew).map(([id,w])=>{var ex=allExs.find(e=>e.id===id);if(!ex)return null;return<div key={id} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)"}}><span style={{fontSize:13}}>{EXE[ex.sv]||"🏃"} {ex.nm}</span><span style={{fontWeight:700,color:accent}}>{w}kg</span></div>})}</div></>}
   </div>)};
 
   // ═══ PLAN ═══
-  var renderPlan=()=>(<div style={{padding:"16px 20px",paddingBottom:100}}>
-    <div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>📅 Semana</div>
-    {DAYF.map((d,i)=>{var m=DM[i];return<div key={i} className="card" style={{display:"flex",alignItems:"center",gap:12,padding:12,borderLeft:i===today?"4px solid "+m.a:"4px solid transparent"}}><span style={{fontSize:26}}>{m.ic}</span><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{d}</div><div style={{color:m.a,fontSize:12}}>{m.l}</div></div>{i===today&&<span style={{fontSize:9,background:accent,color:"#0f0f1a",padding:"3px 8px",borderRadius:6,fontWeight:700}}>HOY</span>}</div>})}
+  var renderPlan=()=>(<div style={{padding:"16px 20px",paddingBottom:100}}><div style={{fontWeight:700,fontSize:17,margin:"4px 0 10px"}}>📅 Semana</div>
+    {DAYS_FULL.map((d,i)=>{var m=DM[i];return<div key={i} className="card" style={{display:"flex",alignItems:"center",gap:12,padding:12,borderLeft:i===today?"4px solid "+m.a:"4px solid transparent"}}><span style={{fontSize:26}}>{m.ic}</span><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{d}</div><div style={{color:m.a,fontSize:12}}>{m.l}</div></div>{i===today&&<span style={{fontSize:9,background:accent,color:"#0f0f1a",padding:"3px 8px",borderRadius:6,fontWeight:700}}>HOY</span>}</div>})}
     <div style={{fontWeight:700,fontSize:17,margin:"18px 0 10px"}}>🏋️ Rutinas</div>
-    {RTS.map(r=><div key={r.id} className="card" style={{borderLeft:"4px solid "+r.cl}}><div style={{display:"flex",justifyContent:"space-between"}}><div style={{fontWeight:800,color:r.cl,fontSize:15}}>{r.nm}</div>{(data.rd||[]).includes(r.id)&&<span style={{fontSize:11,color:"#22c55e"}}>✅</span>}</div><div style={{fontSize:12,color:"#8888aa",marginTop:2}}>{r.dr}</div>{r.w&&r.w.map((e,i)=><div key={i} style={{display:"flex",gap:8,padding:"4px 0",fontSize:12,alignItems:"center",marginTop:i===0?8:0}}><span style={{fontSize:16}}>{EXE[e.sv]||"🏃"}</span><span style={{flex:1}}>{e.nm}</span><span style={{color:"#8888aa"}}>3x{e.rp}</span></div>)}</div>)}
-
-    <div style={{fontWeight:700,fontSize:17,margin:"18px 0 10px"}}>📊 Sistema de puntos</div>
-    <div className="card" style={{lineHeight:1.8,fontSize:13,color:"#ccc"}}>
-      <div>🏋️ Gym completado: <b style={{color:"#3b82f6"}}>+2 pts</b></div>
-      <div>🚶 Pasos 8k+: <b style={{color:"#22c55e"}}>+1 pt</b></div>
-      <div>🧘 Pilates: <b style={{color:"#c084fc"}}>+1 pt</b></div>
-      <div>🥐🍽️🥗 Cada comida bien: <b style={{color:"#f59e0b"}}>+1 pt</b></div>
-      <div>💊 Suplementos: <b style={{color:"#a855f7"}}>+0.5 pt</b></div>
-      <div style={{marginTop:8,padding:"8px 12px",background:"rgba(255,255,255,.03)",borderRadius:8}}>
-        <div style={{fontWeight:700,color:accent}}>Meta: {WEEKLY_GOAL} pts/semana</div>
-        <div style={{fontSize:12,color:"#8888aa",marginTop:4}}>La comida es lo que mas pesa porque el deficit calorico es clave para bajar 4-5kg/mes. El gym mantiene el musculo.</div>
-      </div>
-    </div>
-
-    {streak>0&&<div className="card" style={{textAlign:"center",marginTop:10}}><div style={{fontSize:24}}>{"🔥".repeat(Math.min(streak,4))}</div><div style={{fontSize:13,color:"#f59e0b",fontWeight:600,marginTop:4}}>{streak} semana{streak>1?"s":""} seguida{streak>1?"s":""}</div></div>}
+    {RTS.map(r=><div key={r.id} className="card" style={{borderLeft:"4px solid "+r.cl}}><div style={{display:"flex",justifyContent:"space-between"}}><div style={{fontWeight:800,color:r.cl,fontSize:15}}>{r.nm}</div>{(data.rd||[]).includes(r.id)&&<span style={{color:"#22c55e"}}>✅</span>}</div><div style={{fontSize:12,color:"#8888aa",marginTop:2}}>{r.dr}</div>{r.w&&r.w.map((e,i)=><div key={i} style={{display:"flex",gap:8,padding:"4px 0",fontSize:12,alignItems:"center",marginTop:i===0?8:0}}><span>{EXE[e.sv]||"🏃"}</span><span style={{flex:1}}>{e.nm}</span><span style={{color:"#8888aa"}}>3x{e.rp}</span></div>)}</div>)}
+    <div style={{fontWeight:700,fontSize:17,margin:"18px 0 10px"}}>📊 Puntos</div>
+    <div className="card" style={{lineHeight:1.8,fontSize:13,color:"#ccc"}}><div>🍽️ Cada comida bien: <b style={{color:"#f59e0b"}}>+1 pt</b> (clave)</div><div>💊 Suplementos: <b style={{color:"#a855f7"}}>+0.5 pt</b></div><div>🏋️ Gym: <b style={{color:"#3b82f6"}}>+2 pts</b></div><div>🚶 Pasos/Pilates: <b style={{color:"#22c55e"}}>+1 pt</b></div><div style={{marginTop:8,padding:"8px 12px",background:"rgba(255,255,255,.03)",borderRadius:8}}><div style={{fontWeight:700,color:accent}}>Meta: {WEEKLY_GOAL} pts/semana</div><div style={{fontSize:12,color:"#8888aa",marginTop:4}}>La comida es lo que mas importa. El deficit calorico baja los 4-5kg. El gym mantiene musculo.</div></div></div>
   </div>);
 
   // ═══ SHELL ═══
   return(<div className="app">
     {cfti&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:1000,overflow:"hidden"}}>{Array.from({length:30}).map((_,i)=><div key={i} style={{position:"absolute",left:Math.random()*100+"%",width:6+Math.random()*8+"px",height:6+Math.random()*8+"px",borderRadius:Math.random()>.5?"50%":"2px",background:["#22c55e","#3b82f6","#a855f7","#f59e0b","#ef4444"][i%5],animation:"cF "+(1.5+Math.random())+"s ease-out forwards",animationDelay:Math.random()*.5+"s"}}/>)}</div>}
-    {toast&&<div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:"#1a1a2e",border:"1px solid "+accent,padding:"12px 20px",borderRadius:12,zIndex:999,maxWidth:340,textAlign:"center",fontWeight:500,fontSize:14,boxShadow:"0 8px 32px rgba(0,0,0,.5)",animation:"tS .4s cubic-bezier(.34,1.56,.64,1)"}}>{toast}</div>}
-    <div style={{padding:"20px 20px 14px",background:"linear-gradient(135deg,#0f0f1a,#1a1a2e)",borderBottom:"1px solid rgba(255,255,255,.05)",position:"relative",overflow:"hidden"}}>
+    {toast&&<div style={{position:"fixed",top:"calc(env(safe-area-inset-top,20px) + 12px)",left:"50%",transform:"translateX(-50%)",background:"#1a1a2e",border:"1px solid "+accent,padding:"12px 20px",borderRadius:12,zIndex:999,maxWidth:340,textAlign:"center",fontWeight:500,fontSize:14,boxShadow:"0 8px 32px rgba(0,0,0,.5)",animation:"tS .4s cubic-bezier(.34,1.56,.64,1)"}}>{toast}</div>}
+    <div className="header">
       <div style={{position:"absolute",top:"-50%",right:"-20%",width:160,height:160,background:"radial-gradient(circle,"+accent+",transparent 70%)",opacity:.07,borderRadius:"50%"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,position:"relative"}}><div style={{fontSize:24,fontWeight:800,background:"linear-gradient(135deg,#f0f0f5,"+accent+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{DAYF[today]}</div><div style={{background:accent,color:"#0f0f1a",padding:"5px 12px",borderRadius:18,fontWeight:700,fontSize:12}}>{dm.ic} {dm.l}</div></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,position:"relative"}}><div style={{fontSize:24,fontWeight:800,background:"linear-gradient(135deg,#f0f0f5,"+accent+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{DAYS_FULL[today]}</div><div style={{background:accent,color:"#0f0f1a",padding:"5px 12px",borderRadius:18,fontWeight:700,fontSize:12}}>{dm.ic} {dm.l}</div></div>
       <div style={{color:"#8888aa",fontSize:12}}>{new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long"})} - <span style={{color:accent,fontWeight:600}}>{wp}/{WEEKLY_GOAL} pts</span>{streak>0&&<span style={{color:"#f59e0b",marginLeft:8}}>🔥{streak}w</span>}</div>
     </div>
-
     {ar?renderRoutine():<>{view==="home"&&renderHome()}{view==="steps"&&renderRoutes()}{view==="evo"&&renderEvo()}{view==="plan"&&renderPlan()}</>}
-
     {!ar&&<div className="nav">{[{id:"home",ic:"🏠",l:"Hoy"},{id:"steps",ic:"🚶",l:"Rutas"},{id:"evo",ic:"📈",l:"Evolucion"},{id:"plan",ic:"📋",l:"Plan"}].map(tab=><button key={tab.id} onClick={()=>setView(tab.id)} style={{color:view===tab.id?accent:"#555570"}}><span style={{fontSize:20}}>{tab.ic}</span><span style={{fontSize:10,fontWeight:600}}>{tab.l}</span></button>)}</div>}
   </div>);
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
